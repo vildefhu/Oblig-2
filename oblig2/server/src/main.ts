@@ -2,13 +2,13 @@ import path from "path";
 import express, { Express, NextFunction, Request, Response } from "express";
 //import pymport from 'pymport'
 import fetch from "node-fetch";
-import axios from "axios";
+//import axios from "axios";
 
 const app: Express = express();
 
 app.use(express.json());
 
-app.use("/", express.static(path.join(__dirname, "../../client/dist")));
+//app.use("/", express.static(path.join(__dirname, "../../client/dist")));
 
 app.use(function (
   inRequest: Request,
@@ -29,6 +29,7 @@ app.listen(80, () => {
   console.log("Lytter på port 80");
 });
 
+//henter data fra SSB med satte krav
 const url = "https://data.ssb.no/api/v0/no/table/11342/";
 
 const query: any = {
@@ -53,10 +54,11 @@ const query: any = {
   },
 };
 
+//lager endepunkt for tabell med data fra SSB
 app.get("/table", async (req: Request, res: Response) => {
   console.log("Forespørsel mottatt for /table");
   try {
-    // Utfør forespørsel til SSB-API-et
+    // Utfør forespørsel til SSB-APIet
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify(query),
@@ -67,9 +69,9 @@ app.get("/table", async (req: Request, res: Response) => {
 
     // Hent data fra responsen
     const data = await response.json();
-    console.log("Data mottatt fra SSB-API-et:", data);
+    console.log("Data mottatt fra SSB-APIet:", data);
 
-    // Render tabellen til nettleseren
+    //Tabellen printes til nettleseren
     let html = renderTable(data);
     res.send(html);
   } catch (error) {
@@ -78,9 +80,10 @@ app.get("/table", async (req: Request, res: Response) => {
   }
 });
 
+//endepunkt for beregning av median, gjennomsnitt, max og min verdi
 app.get("/calculate", async (req: Request, res: Response) => {
   try {
-    // Utfør forespørsel til SSB-API-et
+    // Utfør forespørsel til SSB-APIet
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify(query),
@@ -91,7 +94,7 @@ app.get("/calculate", async (req: Request, res: Response) => {
 
     // Hent data fra responsen
     const data = await response.json();
-    const variableIndices = data.dimension.ContentsCode.category.index;
+    const variableIndices = data.dimension.ContentsCode.category.index;   
     const variableLabels = data.dimension.ContentsCode.category.label;
     const variableKeys = Object.keys(variableIndices).sort(
       (a, b) => variableIndices[a] - variableIndices[b]
@@ -99,6 +102,7 @@ app.get("/calculate", async (req: Request, res: Response) => {
     const yearSize = Object.keys(data.dimension.Tid.category.index).length;
     const regionSize = Object.keys(data.dimension.Region.category.index).length;
 
+    //lager html dynamisk for å presentere verdiene i en tabell
     let html = `<table border="1" style="border-collapse: collapse; width: 100%;">`;
     html += `<thead><tr><th>Variable</th><th>Median</th><th>Average</th><th>Max</th><th>Min</th></tr></thead><tbody>`;
 
@@ -201,16 +205,4 @@ function renderTable(data: any): string {
   return html;
 }
 
-/*
-  Regene ut gjennomsnitt for lista med verdier 
-  const np = proxify(pymport('numpy'))
 
-  const my_nump_a =np.get('asarry').call(mylist,{dtype: 'float'}).get('reshape').call(3,5)
-
-  const my_mean: any = np.get('mean').call(my_nump_a,1,{dtype: 'float'})
-
-  cont print_str: string = my_mean.get('tolist').call().toJS()
-
-  consol.log (` gjennomsnitt for radene: ${print_str}`)
-
-  */
