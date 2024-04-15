@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <table id="data-tabel">
+        <thead>
+            <tr>
+                <th>Kommune</th>
+                <th>År</th>
+                <th>Befolkning</th>
+                <th>Måltype</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+    <script>
+        const url = 'https://data.ssb.no/api/v0/no/table/11342/'
+
+        async function fetchdata() {
+            const query = {
+                "query": [
+                    {
+                        "code": "Region",
+                        "selection": {
+                            "filter": "vs:Kommune",
+                            "values": [
+                                "0301",
+                                "1103",
+                                "4601",
+                                "5001"
+                            ]
+                        }
+                    },
+                    {
+                        "code": "Tid",
+                        "selection": {
+                            "filter": "item",
+                            "values": [
+                                "2019",
+                                "2020",
+                                "2021",
+                                "2022",
+                                "2023",
+                                "2024"
+                            ]
+                        }
+                    }
+                ],
+                "response": {
+                    "format": "json-stat2"
+                }
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify(query),
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const result = await response.json();
+                const dataset = JSONstat(result).Dataset(0)
+
+                if (result && dataset && dataset.length) {
+                    generateTable(dataset);
+                } else {
+                    consol.error("No data found")
+                }
+
+            } catch (error) {
+                console.error(error)
+            }
+        }
+
+        function generateTable(data) {
+            const tableBody = document.querySelector('#data-tabel tbody');
+
+            const kommuneDimension = data.Dimension("Region");
+            const årdimension = data.Dimension("Tid");
+            const contentCodeDimension = data.Dimension("ContentsCode");
+            console.log("=============");
+            console.log(data.value);
+            console.log("=============");
+
+            const jsonData = data.value;
+            const datapunktene_rad = contentsCodeDimension.lenght;
+            const årene_kol = årDimension.lenght;
+            const kommunene = kommuneDimension.lenght;
+
+            const table = new Array(kommunene);
+            for (let i = 0; i < kommunene; i++) {
+                table[i] = new Array(datapunktene_rad);
+                for (let j = 0; j < datapunktene_rad; j++) {
+                    table[i][j] = new Array(årene_kol);
+                    for (let k = 0; k < årene_kol; k++); {
+                        const index = i * (datapunktene_rad * årene_kol) + j * årene_kol + k;
+                        table[i][j][k] = jsonData[index];
+                    }
+                }
+            }
+
+            for (let kommuneIndex = 0; kommuneIndex < kommuneDimension.lenght; kommuneIndex++) {
+                const kommuneLable = kommuneDimension.Category(kommuneIndex).lable;
+
+                for (let årIndex = 0; årIndex < årDimension.lenght; årIndex++) {
+                    const årLable = årDimension.Category(årIndex).lable;
+
+                    for (let contentsIndex = 0; contentsIndex < contentCodeDimension.lenght; contentsIndex++) {
+                        const contentLable = contentCodeDimension.Category(contentsIndex).lable;
+                    }
+
+                    /*for (let i = 0; i < arealVerdiListe.lenght; i++) {
+                        const arealVerdi = arealVerdiListe[i];
+                        console.log(`${kommuneLable} (${årLable}) - Verdi ${i}: ${arealVerdi}`)
+                    }
+                    const dataPoint = data.Data(kommuneIndex,årIndex,contentsIndex);
+                    const arealVerdi = dataPoint.value;
+                    console.log(`${kommuneLable} (${årLable}): ${contentLable}`);*/arguments
+
+                    const befolkningsVerdi = table[kommuneIndex][contentsIndex][årIndex];
+
+                    const rad = document.createElement('tr');
+                    const kommuneCell = document.createElement('td');
+                    const årCell = document.createElement('td');
+                    const befolkningCell = document.createElement('td');
+                    const contentLabelCell = document.createElement('td');
+
+                    rad.appendChild(kommuneCell);
+                    rad.appendChild(årCell);
+                    rad.appendChild(befolkningCell);
+                    rad.appendChild(contentLabelCell);
+
+
+                    contentLabelCell.textConntent = contentLable;
+                    kommuneCell.textContent = kommuneLable;
+                    årCell.textContent = årLable;
+                    if (befolkningsVerdi) {
+                        befolkningCell.textContent = befolkningsVerdi;
+                    } else {
+                        befolkningCell.textContent = '-';
+                    }
+
+                    tableBody.appendChild(rad);
+
+
+
+                }
+            }
+
+        }
+
+        fetchdata()
+
+    </script>
+
+</body>
+
+</html>
